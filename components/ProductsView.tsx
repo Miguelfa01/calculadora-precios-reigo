@@ -279,7 +279,14 @@ export const ProductsView: React.FC<ProductsViewProps> = ({ results, currency, f
                 <div key={p.id} className="bg-white rounded-xl border border-slate-100 p-4 shadow-sm">
                   <div className="flex justify-between items-start gap-2 mb-2">
                     <span className="font-mono font-bold text-slate-800">{p.code}</span>
-                    <span className="font-mono font-bold text-indigo-600 text-sm">{formatPrice(price, currency)}</span>
+                    <div className="flex flex-col items-end text-right gap-0.5">
+                      <span className="font-mono font-bold text-xs text-slate-800">
+                        P. IVA: {formatPrice(currency === 'Bs' ? priceBaseWithIva * factorCambiario : priceBaseWithIva, currency)}
+                      </span>
+                      <span className="font-mono font-bold text-xs text-indigo-600">
+                        Con desc.: {formatPrice(price, currency)}
+                      </span>
+                    </div>
                   </div>
                   <p className="text-xs text-slate-600 mb-2 line-clamp-2">{p.description}</p>
                   {(p.category || p.line) && (

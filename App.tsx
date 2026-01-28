@@ -113,6 +113,7 @@ const App: React.FC = () => {
           </nav>
           
           <div className="flex items-center gap-3 sm:gap-8">
+            {/* Tasas (desktop) */}
             <div className="hidden sm:flex gap-6">
               <div className="text-right border-r border-slate-100 pr-6">
                 <span className="block text-[10px] uppercase font-black text-slate-400 leading-none mb-1 tracking-widest text-nowrap">Tasa BCV</span>
@@ -121,6 +122,19 @@ const App: React.FC = () => {
               <div className="text-right">
                 <span className="block text-[10px] uppercase font-black text-slate-400 leading-none mb-1 tracking-widest text-nowrap">Tasa Binance</span>
                 <span className="font-mono text-sm font-bold text-slate-700">{inputs.tasaBinance.toFixed(2)} Bs</span>
+              </div>
+            </div>
+
+            {/* Tasas (móvil) */}
+            <div className="sm:hidden flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2">
+              <div className="flex flex-col leading-none">
+                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">BCV</span>
+                <span className="font-mono text-xs font-bold text-slate-700">{inputs.tasaBcv.toFixed(2)}</span>
+              </div>
+              <div className="h-6 w-px bg-slate-200" />
+              <div className="flex flex-col leading-none">
+                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Binance</span>
+                <span className="font-mono text-xs font-bold text-slate-700">{inputs.tasaBinance.toFixed(2)}</span>
               </div>
             </div>
             <button 
