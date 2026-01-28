@@ -6,6 +6,7 @@ export interface AppInputs {
   margenUtilidadDeseado: number;
   tasaBcv: number;
   tasaBinance: number;
+  colchonBinancePct: number;
   descuentoProveedor1: number;
   descuentoProveedor2: number;
   descuentoSugerido1: number;
@@ -27,4 +28,16 @@ export interface CalculationResults {
   isLoss: boolean;
   faltantePct: number;
   margenRealLogrado: number; // The margin achieved after rounding discounts
+}
+
+export interface Product {
+  id: string;
+  code: string;
+  description: string;
+  cost: number;
+  sale_price: number;
+  category: string;
+  line: string;
+  created_at?: string;
+  updated_at?: string;
 }

@@ -1,5 +1,4 @@
-
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Calculator, 
   Tag, 
@@ -14,25 +13,47 @@ import {
   TrendingUp,
   Banknote,
   CheckCircle2,
-  ChevronRight
+  ChevronRight,
+  Loader2,
+  Package
 } from 'lucide-react';
 import { AppInputs } from './types';
 import { calculateResults, formatCurrency, formatPercent } from './services/calculatorService';
+import { loadConfig, saveConfig, DEFAULT_INPUTS } from './services/configStorage';
+import { ProductsView } from './components/ProductsView';
+
+type ViewMode = 'calculator' | 'products';
 
 const App: React.FC = () => {
   const [showSettings, setShowSettings] = useState(false);
-  const [inputs, setInputs] = useState<AppInputs>({
-    precioVentaConIva: 100,
-    utilidadActual: 90,
-    ivaActual: 16,
-    margenUtilidadDeseado: 30,
-    tasaBcv: 47.11,
-    tasaBinance: 53.50,
-    descuentoProveedor1: 35,
-    descuentoProveedor2: 10,
-    descuentoSugerido1: 0,
-    currency: 'USD'
-  });
+  const [view, setView] = useState<ViewMode>('calculator');
+  const [hasVisitedProducts, setHasVisitedProducts] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [inputs, setInputs] = useState<AppInputs>(DEFAULT_INPUTS);
+
+  const setViewAndTrack = (mode: ViewMode) => {
+    setView(mode);
+    if (mode === 'products') setHasVisitedProducts(true);
+  };
+
+  useEffect(() => {
+    loadConfig().then((saved) => {
+      setInputs(saved);
+      setLoading(false);
+    }).catch(() => {
+      setInputs(DEFAULT_INPUTS);
+      setLoading(false);
+    });
+  }, []);
+
+  const closeSettings = () => {
+    setShowSettings(false);
+    saveConfig(inputs).then((result) => {
+      if (!result.ok && import.meta.env.DEV) {
+        console.warn('[ProfitFlow] No se pudo guardar la config:', result.error);
+      }
+    });
+  };
 
   const results = useMemo(() => calculateResults(inputs), [inputs]);
 
@@ -46,6 +67,22 @@ const App: React.FC = () => {
 
   const precioFinalCalculado = inputs.precioVentaConIva * (1 - results.descuento1/100) * (1 - results.descuento2/100);
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8 sm:p-12 flex flex-col items-center gap-6 max-w-sm mx-4">
+          <div className="bg-indigo-100 p-4 rounded-2xl">
+            <Loader2 className="w-10 h-10 sm:w-12 sm:h-12 text-indigo-600 animate-spin" />
+          </div>
+          <div className="text-center">
+            <p className="text-slate-700 font-bold text-sm sm:text-base uppercase tracking-wider">Cargando configuración</p>
+            <p className="text-slate-400 text-xs sm:text-sm mt-1">Obteniendo tus parámetros guardados…</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 pb-10 sm:pb-16">
       {/* Header */}
@@ -57,6 +94,23 @@ const App: React.FC = () => {
             </div>
             <h1 className="text-base sm:text-lg font-bold text-slate-800">ProfitFlow <span className="text-indigo-600 font-medium tracking-tight">Analytics</span></h1>
           </div>
+
+          <nav className="flex p-1 bg-slate-100 rounded-xl border border-slate-200/50" aria-label="Vistas">
+            <button
+              type="button"
+              onClick={() => setViewAndTrack('calculator')}
+              className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${view === 'calculator' ? 'bg-white text-indigo-600 shadow' : 'text-slate-500 hover:text-slate-700'}`}
+            >
+              <Calculator size={14} /> Calculadora
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewAndTrack('products')}
+              className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${view === 'products' ? 'bg-white text-indigo-600 shadow' : 'text-slate-500 hover:text-slate-700'}`}
+            >
+              <Package size={14} /> Productos
+            </button>
+          </nav>
           
           <div className="flex items-center gap-3 sm:gap-8">
             <div className="hidden sm:flex gap-6">
@@ -65,13 +119,14 @@ const App: React.FC = () => {
                 <span className="font-mono text-sm font-bold text-slate-700">{inputs.tasaBcv.toFixed(2)} Bs</span>
               </div>
               <div className="text-right">
-                <span className="block text-[10px] uppercase font-black text-slate-400 leading-none mb-1 tracking-widest text-nowrap">Tasa Reposición</span>
+                <span className="block text-[10px] uppercase font-black text-slate-400 leading-none mb-1 tracking-widest text-nowrap">Tasa Binance</span>
                 <span className="font-mono text-sm font-bold text-slate-700">{inputs.tasaBinance.toFixed(2)} Bs</span>
               </div>
             </div>
             <button 
               onClick={() => setShowSettings(true)}
               className="flex items-center gap-2 px-3 sm:px-5 py-2 sm:py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl sm:rounded-2xl transition-all font-bold text-[10px] sm:text-xs uppercase tracking-wider border border-slate-200"
+              aria-label="Configurar"
             >
               <Settings size={14} className="sm:w-4 sm:h-4" />
               <span className="hidden xs:inline">Configurar</span>
@@ -80,6 +135,7 @@ const App: React.FC = () => {
         </div>
       </header>
 
+      <div className={view !== 'calculator' ? 'hidden' : undefined}>
       <main className="max-w-7xl mx-auto px-4 sm:px-6 mt-6 sm:mt-10 space-y-6 sm:space-y-10">
         
         {/* Panel Principal */}
@@ -116,7 +172,7 @@ const App: React.FC = () => {
                     <input 
                       type="number" 
                       name="precioVentaConIva"
-                      value={inputs.precioVentaConIva}
+                      value={inputs.precioVentaConIva || ''}
                       onChange={handleInputChange}
                       className="block w-full pl-12 sm:pl-16 pr-4 sm:pr-8 py-4 sm:py-5 bg-slate-50 border-2 border-slate-100 rounded-xl sm:rounded-[1.5rem] text-3xl sm:text-5xl font-black text-slate-800 focus:bg-white focus:border-indigo-500 outline-none transition-all shadow-inner"
                       placeholder="0.00"
@@ -314,6 +370,17 @@ const App: React.FC = () => {
 
         </section>
       </main>
+      </div>
+
+      {hasVisitedProducts && (
+        <div className={view !== 'products' ? 'hidden' : undefined}>
+          <ProductsView
+            results={results}
+            currency={inputs.currency}
+            factorCambiario={results.factorCambiario}
+          />
+        </div>
+      )}
 
       {/* Modal de Configuración */}
       {showSettings && (
@@ -330,8 +397,9 @@ const App: React.FC = () => {
                 </div>
               </div>
               <button 
-                onClick={() => setShowSettings(false)}
+                onClick={closeSettings}
                 className="p-2 sm:p-3 hover:bg-slate-200 rounded-lg sm:rounded-xl transition-all text-slate-400 hover:text-slate-600"
+                aria-label="Cerrar"
               >
                 <X size={20} sm:size={24} />
               </button>
@@ -365,6 +433,38 @@ const App: React.FC = () => {
                       onChange={handleInputChange}
                       className="w-full px-4 sm:px-6 py-3 sm:py-4 bg-slate-50 border border-slate-200 rounded-xl sm:rounded-2xl outline-none font-mono text-base sm:text-lg font-black transition-all shadow-inner"
                     />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[9px] sm:text-[10px] font-black text-slate-500 uppercase tracking-widest">Colchón Binance (%)</label>
+                  <p className="text-[8px] sm:text-[9px] text-slate-400 uppercase tracking-wider">Se suma como % a la tasa por si sube. Ej: 0.5% o 1%.</p>
+                  <div className="flex gap-2 items-center flex-wrap">
+                    <input 
+                      type="number" 
+                      name="colchonBinancePct"
+                      min={0}
+                      step={0.5}
+                      value={inputs.colchonBinancePct}
+                      onChange={handleInputChange}
+                      className="w-20 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none font-mono text-sm font-black text-center shadow-inner"
+                    />
+                    <span className="text-slate-400 font-bold text-sm">%</span>
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setInputs(p => ({ ...p, colchonBinancePct: 0.5 }))}
+                        className={`px-3 py-2 rounded-lg text-xs font-bold transition-all ${inputs.colchonBinancePct === 0.5 ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                      >
+                        0.5%
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setInputs(p => ({ ...p, colchonBinancePct: 1 }))}
+                        className={`px-3 py-2 rounded-lg text-xs font-bold transition-all ${inputs.colchonBinancePct === 1 ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                      >
+                        1%
+                      </button>
+                    </div>
                   </div>
                 </div>
               </section>
@@ -440,7 +540,7 @@ const App: React.FC = () => {
 
             <div className="p-6 sm:p-10 bg-slate-50 border-t border-slate-100">
               <button 
-                onClick={() => setShowSettings(false)}
+                onClick={closeSettings}
                 className="w-full py-4 sm:py-6 bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase tracking-[0.3em] text-[10px] sm:text-xs rounded-xl sm:rounded-2xl transition-all shadow-xl"
               >
                 Actualizar Motor

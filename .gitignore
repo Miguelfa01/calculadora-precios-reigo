@@ -1,3 +1,14 @@
+# Dependencias y build
+node_modules
+dist
+dist-ssr
+*.local
+
+# Variables de entorno (secretos: nunca subir)
+.env
+.env.local
+.env.*.local
+
 # Logs
 logs
 *.log
@@ -7,16 +18,21 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# Supabase CLI (estado local)
+.supabase
 
-# Editor directories and files
+# Vercel (salida del CLI)
+.vercel
+
+# Archivos empaquetados / backup (no necesarios en el repo)
+*.zip
+
+# Editor e IDE
 .vscode/*
 !.vscode/extensions.json
 .idea
 .DS_Store
+Thumbs.db
 *.suo
 *.ntvs*
 *.njsproj

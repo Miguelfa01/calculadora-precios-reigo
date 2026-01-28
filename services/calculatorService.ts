@@ -14,8 +14,11 @@ export const calculateResults = (inputs: AppInputs): CalculationResults => {
     descuentoProveedor2,
     tasaBcv,
     tasaBinance,
+    colchonBinancePct = 0,
     currency
   } = inputs;
+
+  const tasaReposicionEfectiva = tasaBinance * (1 + colchonBinancePct / 100);
 
   // 1. Remover IVA del precio actual
   const precioSinIva = precioVentaConIva / (1 + ivaActual / 100);
@@ -32,10 +35,10 @@ export const calculateResults = (inputs: AppInputs): CalculationResults => {
   // 5. Precio objetivo con IVA (USD)
   const precioObjetivoConIvaUsd = precioObjetivoSinIva * (1 + ivaActual / 100);
 
-  // 6. Factor cambiario y ajuste por modo de pago
-  const factorCambiario = tasaBinance / tasaBcv;
-  const precioObjetivoConIvaAjustado = currency === 'Bs' 
-    ? precioObjetivoConIvaUsd * factorCambiario 
+  // 6. Factor cambiario (usa tasa reposición con colchón %) y ajuste por modo de pago
+  const factorCambiario = tasaReposicionEfectiva / tasaBcv;
+  const precioObjetivoConIvaAjustado = currency === 'Bs'
+    ? precioObjetivoConIvaUsd * factorCambiario
     : precioObjetivoConIvaUsd;
 
   // 7. Descuento máximo total vs precio actual para llegar al objetivo exacto
